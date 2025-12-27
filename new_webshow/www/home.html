@@ -1,0 +1,178 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<!-- Google Fonts -->
+<link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+<!-- Custom CSS -->
+<link rel="stylesheet" href="/assets/new_webshow/css/home.css">
+
+<!-- HERO CONTENT -->
+<div class="hero">
+    <h1 class="reveal delay-1">Q-Dynamics</h1>
+    <p class="reveal delay-2">Artisanal Touches for Your Living Space</p>
+    <a href="/shop" class="shop-now reveal delay-3">SHOP NOW ↗</a>
+</div>
+
+<!-- HERO IMAGE -->
+<div class="hero-image reveal-scale delay-2">
+    <img src="/assets/new_webshow/images/image1.png" alt="Living Space">
+</div>
+
+<!-- LANDING SECTION -->
+<section class="landing-wrapper">
+
+    <div class="landing-content">
+        <span class="collection-label reveal delay-1">New Collection</span>
+
+        <h1 class="main-heading reveal delay-2">
+            BRING A TOUCH OF<br>
+            NATURE INDOORS
+        </h1>
+
+        <a href="/shop" class="reveal delay-3">SHOP NOW ↗</a>
+
+        <div class="preview-box reveal-scale delay-4" id="preview-box">
+            <!-- First product image will be injected here -->
+        </div>
+    </div>
+
+    <div class="landing-visual reveal-right delay-2" id="landing-visual">
+        <!-- Second product image will be injected here -->
+    </div>
+
+</section>
+
+<!-- STORY SECTION -->
+<section class="story-section">
+
+    <div class="story-top">
+        <div class="story-nav reveal delay-1">
+            <span>ABOUT<br>CRAFTICO</span>
+            <span>TIMLESS<br>ARTISTRY</span>
+        </div>
+
+        <h1 class="story-quote reveal delay-2">
+            “THE BEAUTY IN IMPERFECTIONS<br>
+            REVEALS THE STORY OF ARTISTRY AND<br>
+            CRAFTMANSHIP.”
+        </h1>
+    </div>
+
+    <div class="story-grid">
+        <div class="story-empty"></div>
+
+        <div class="story-content reveal delay-3">
+            <p>
+                This is a space to share more about the business: who’s behind it,
+                what it does and what this site has to offer.
+            </p>
+
+            <a href="#" class="story-link">READ MORE ↗</a>
+        </div>
+    </div>
+</section>
+
+<!-- BEST SELLERS (DYNAMIC) -->
+<section class="best-sellers">
+    <h2 class="best-title reveal delay-1">BEST SELLERS</h2>
+
+    <div class="product-grid" id="productGrid">
+        <!-- API products will load here -->
+    </div>
+</section>
+
+<!-- GIFT SECTION -->
+<section class="gift-section">
+    <div class="gift-grid">
+
+        <div class="gift-image reveal-left delay-1">
+            <img src="/assets/new_webshow/images/gift.png">
+        </div>
+
+        <div class="gift-content reveal delay-2">
+            <div class="gift-top">
+                <span>CRAFTICO</span>
+                <span>GIFT CARD</span>
+            </div>
+
+            <h2 class="gift-heading">
+                GIVE THE GIFT<br>
+                OF CHOICE
+            </h2>
+        </div>
+
+    </div>
+</section>
+
+<!-- JS -->
+<script>
+    /* Scroll Animations */
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('show');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    // Observe all initial reveal elements
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale')
+        .forEach(el => observer.observe(el));
+
+    /* Load Products from API */
+    async function loadProducts() {
+        try {
+            const response = await fetch("/api/method/new_webshow.api.items.get_all_items");
+            const data = await response.json();
+
+            // Log API response in console
+            console.log("API Response:", data);
+
+            const products = data.message || [];
+
+            if (products.length >= 2) {
+                // Landing section: first two products
+                document.getElementById("preview-box").innerHTML =
+                    `<img src="${products[0].image}" alt="${products[0].item_name}">`;
+                document.getElementById("landing-visual").innerHTML =
+                    `<img src="${products[1].image}" alt="${products[1].item_name}">`;
+            }
+
+            // Best Sellers: all products
+            const productGrid = document.getElementById("productGrid");
+            productGrid.innerHTML = "";
+
+            products.forEach((item, index) => {
+                const card = document.createElement("div");
+                card.classList.add("product-card", "reveal-scale");
+                card.style.animationDelay = `${index * 0.2 + 1}s`;
+
+                card.innerHTML = `
+                    <img src="${item.image || '/assets/new_webshow/images/placeholder.png'}" alt="${item.item_name}">
+                    <div class="product-info">
+                        <p class="product-name">${item.item_name}</p>
+                        <p class="product-price">₹${item.standard_rate}</p>
+                    </div>
+                `;
+
+                productGrid.appendChild(card);
+                observer.observe(card);
+            });
+
+        } catch (error) {
+            console.error("Failed to load products:", error);
+        }
+    }
+
+    loadProducts();
+</script>
+
+{% endblock %}

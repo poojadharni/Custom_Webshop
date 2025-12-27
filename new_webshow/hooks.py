@@ -20,6 +20,11 @@ app_license = "mit"
 # 		"has_permission": "new_webshow.api.permission.has_app_permission"
 # 	}
 # ]
+# web_include_css = [
+#     "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap"
+# ]
+website_home_page = "index"
+
 
 # Includes in <head>
 # ------------------
