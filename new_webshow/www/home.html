@@ -13,6 +13,7 @@
 <!-- Custom CSS -->
 <link rel="stylesheet" href="/assets/new_webshow/css/home.css">
 
+
 <!-- HERO CONTENT -->
 <div class="hero">
     <h1 class="reveal delay-1">Q-Dynamics</h1>
@@ -38,13 +39,13 @@
 
         <a href="/all-products" class="reveal delay-3">SHOP NOW ↗</a>
 
-        <div class="preview-box reveal-scale delay-4" id="preview-box">
-            <!-- First product image will be injected here -->
+        <div class="preview-box reveal-scale delay-4">
+            <img src="/assets/new_webshow/images/stool.png" alt="Product Preview">
         </div>
     </div>
 
-    <div class="landing-visual reveal-right delay-2" id="landing-visual">
-        <!-- Second product image will be injected here -->
+    <div class="landing-visual reveal-right delay-2">
+        <img src="/assets/new_webshow/images/lamp.png" alt="Hero Image">
     </div>
 
 </section>
@@ -79,100 +80,147 @@
     </div>
 </section>
 
-<!-- BEST SELLERS (DYNAMIC) -->
+<!-- BEST SELLERS -->
 <section class="best-sellers">
     <h2 class="best-title reveal delay-1">BEST SELLERS</h2>
 
-    <div class="product-grid" id="productGrid">
-        <!-- API products will load here -->
+    <div class="product-grid" id="product-grid">
+        <!-- Products dynamically loaded -->
     </div>
 </section>
 
-<!-- GIFT SECTION -->
-<section class="gift-section">
-    <div class="gift-grid">
 
-        <div class="gift-image reveal-left delay-1">
-            <img src="/assets/new_webshow/images/gift.png">
-        </div>
-
-        <div class="gift-content reveal delay-2">
-            <div class="gift-top">
-                <span>CRAFTICO</span>
-                <span>GIFT CARD</span>
-            </div>
-
-            <h2 class="gift-heading">
-                GIVE THE GIFT<br>
-                OF CHOICE
-            </h2>
-        </div>
-
-    </div>
-</section>
-
-<!-- JS -->
 <script>
-    /* Scroll Animations */
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('show');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.15 });
-
-    // Observe all initial reveal elements
-    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale')
-        .forEach(el => observer.observe(el));
-
-    /* Load Products from API */
-    async function loadProducts() {
-        try {
-            const response = await fetch("/api/method/new_webshow.api.items.get_all_items");
-            const data = await response.json();
-
-            // Log API response in console
-            console.log("API Response:", data);
-
-            const products = data.message || [];
-
-            if (products.length >= 2) {
-                // Landing section: first two products
-                document.getElementById("preview-box").innerHTML =
-                    `<img src="${products[0].image}" alt="${products[0].item_name}">`;
-                document.getElementById("landing-visual").innerHTML =
-                    `<img src="${products[1].image}" alt="${products[1].item_name}">`;
-            }
-
-            // Best Sellers: all products
-            const productGrid = document.getElementById("productGrid");
-            productGrid.innerHTML = "";
-
-            products.forEach((item, index) => {
-                const card = document.createElement("div");
-                card.classList.add("product-card", "reveal-scale");
-                card.style.animationDelay = `${index * 0.2 + 1}s`;
-
-                card.innerHTML = `
-                    <img src="${item.image || '/assets/new_webshow/images/placeholder.png'}" alt="${item.item_name}">
-                    <div class="product-info">
-                        <p class="product-name">${item.item_name}</p>
-                        <p class="product-price">₹${item.standard_rate}</p>
-                    </div>
-                `;
-
-                productGrid.appendChild(card);
-                observer.observe(card);
-            });
-
-        } catch (error) {
-            console.error("Failed to load products:", error);
+    // Helper functions for Frappe e-commerce
+    function addToCart(productRoute, qty = 1, button) {
+        if (!frappe.session.user || frappe.session.user === 'Guest') {
+            alert('Please login to add to cart');
+            window.location.href = '/login';
+            return;
         }
+
+        fetch('/api/method/frappe.e_commerce.add_to_cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': frappe.csrf_token
+            },
+            body: JSON.stringify({ item_code: productRoute, qty })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    // Visually indicate added to cart
+                    button.classList.add('added-to-cart');
+                    frappe.call('frappe.e_commerce.cart.update_cart_count'); // Update cart count
+                } else {
+                    console.log('Failed to add to cart', data);
+                }
+            })
+            .catch(err => console.error(err));
     }
 
-    loadProducts();
+    function addToWishlist(productRoute, button) {
+        if (!frappe.session.user || frappe.session.user === 'Guest') {
+            alert('Please login to add to wishlist');
+            window.location.href = '/login';
+            return;
+        }
+
+        fetch('/api/method/frappe.e_commerce.add_to_wishlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': frappe.csrf_token
+            },
+            body: JSON.stringify({ item_code: productRoute })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message) {
+                    // Visually indicate wishlisted
+                    button.classList.add('wishlisted');
+                } else {
+                    console.log('Failed to add to wishlist', data);
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    // Helper to create a route/slug if API doesn't provide it
+    function generateSlug(name) {
+        return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+    }
+
+    // Fetch products from API
+    fetch('/api/method/new_webshow.api.items.get_all_items')
+        .then(res => res.json())
+        .then(data => {
+            const products = data.message;
+            const productGrid = document.getElementById('product-grid');
+
+            products.forEach((product, index) => {
+                const productRoute = product.route || generateSlug(product.item_name);
+
+                const productCard = document.createElement('div');
+                productCard.className = `product-card reveal-scale delay-${index + 1}`;
+                productCard.innerHTML = `
+                    <img src="${product.image}" alt="${product.item_name}" class="product-image"
+                        onclick="window.location.href='/${productRoute}'">
+                    <div class="product-info">
+                        <p class="product-name">${product.item_name}</p>
+                        <p class="product-price">₹${product.standard_rate}</p>
+                    </div>
+                    <div class="icon-container">
+                        <button title="Add to Wishlist" onclick="addToWishlist('${productRoute}', this)">
+                            <svg class="wishlist-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 010 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                        <button title="Add to Cart" onclick="addToCart('${productRoute}',1,this)">
+                            <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8H19m-12-8l-1-5h13.2"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                productGrid.appendChild(productCard);
+            });
+
+            // Scroll reveal animations
+            const items = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('show');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            items.forEach(el => observer.observe(el));
+        })
+        .catch(err => console.error('Error fetching products:', err));
 </script>
+
+<style>
+    /* Wishlist icon red when clicked */
+    .wishlisted svg {
+        fill: red;
+        stroke: red;
+        transition: 0.3s;
+    }
+
+    /* Cart icon visual change when clicked */
+    .added-to-cart svg {
+        opacity: 0.5;
+        filter: blur(1px);
+        transition: 0.3s;
+    }
+</style>
+
+
+
 
 {% endblock %}
