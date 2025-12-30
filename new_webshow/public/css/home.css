@@ -34,7 +34,7 @@ dl {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 60px;
+    padding: 0px 20px;
 }
 
 .logo {
@@ -713,4 +713,86 @@ dl {
         transform: none;
         opacity: 1;
     }
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    background: #fff;
+    transition: transform 0.3s;
+}
+
+.product-card:hover {
+    transform: scale(1.02);
+}
+
+.product-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.product-info {
+    text-align: center;
+}
+
+.product-name {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.product-price {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.icon-container {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.icon-container button {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.icon-container svg {
+    width: 20px;
+    height: 20px;
+    stroke: #333;
+}
+
+.reveal,
+.reveal-scale {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+}
+
+.reveal.show,
+.reveal-scale.show {
+    opacity: 1;
+    transform: translateY(0);
 }
